@@ -40,10 +40,13 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`,
 
 ## Database migrations
 
-- Generate Alembic revisions under **your service's branch label** only:
-  `migrations/versions/<service>/`.
-- Never create a cross-service revision or rebase another team's migration head.
-- The entrypoint runs `alembic upgrade heads` (plural) to apply every branch.
+- Add plain-SQL files under **your service's** folder only:
+  `migrations/sql/<service>/NNNN_<name>.{up,down}.sql`.
+- Numbering is per-service (`0001`, `0002`, …) so teams never collide on a shared
+  sequence.
+- Apply with `python scripts/migrate_sql.py` (idempotent; tracked in
+  `schema_migrations`). CI runs this against a real Postgres on every PR.
+- See [`knowledge/Database Migrations.md`](knowledge/Database%20Migrations.md).
 
 ## CI gates
 

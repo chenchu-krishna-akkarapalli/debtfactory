@@ -1,16 +1,18 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage image: base (deps) -> dev (reload) / prod (slim, non-root, gunicorn).
+# Multi-stage image: base (deps) -> dev (tooling + reload) / prod (slim, non-root).
+# One image, one Python (3.12) — every developer and CI runs the exact same thing.
 
 # --------------------------------------------------------------------------- #
-# base — shared OS deps + compiled Python requirements.
+# base — shared OS deps + Python runtime requirements.
 # --------------------------------------------------------------------------- #
 FROM python:3.12-slim AS base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/src
 
-# tesseract is needed by the OCR jobs service; libpq for asyncpg builds.
+# tesseract for the OCR jobs service; libpq for asyncpg.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         tesseract-ocr \
@@ -19,27 +21,30 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Install runtime deps first for better layer caching.
+# Runtime deps come from the requirements/*.in fragments (no committed lockfiles).
+# Constraint files (-c) can't carry extras, so strip them from base.in -> base.txt
+# which the dev/service fragments reference.
 COPY requirements/ requirements/
-RUN pip install \
-        -r requirements/base.txt \
-        -r requirements/services/rule_engine.txt \
-        -r requirements/services/auth.txt \
-        -r requirements/services/domain_logs.txt \
-        -r requirements/services/ocr_jobs.txt
+RUN sed 's/\[[^]]*\]//g' requirements/base.in > requirements/base.txt \
+    && pip install \
+        -r requirements/base.in \
+        -r requirements/services/rule_engine.in \
+        -r requirements/services/auth.in \
+        -r requirements/services/domain_logs.in \
+        -r requirements/services/ocr_jobs.in
 
 COPY pyproject.toml alembic.ini ./
 COPY src/ src/
 COPY migrations/ migrations/
 COPY scripts/ scripts/
 
-ENV PYTHONPATH=/app/src
-
 # --------------------------------------------------------------------------- #
-# dev — dev tooling + hot reload. Source is bind-mounted in compose.dev.yaml.
+# dev — adds lint/format/type/test tooling. Source is bind-mounted in compose.dev.
+# tests/ is copied so the image is self-contained for CI (the mount overlays it).
 # --------------------------------------------------------------------------- #
 FROM base AS dev
-RUN pip install -r requirements/dev.txt
+RUN pip install -r requirements/dev.in
+COPY tests/ tests/
 COPY docker/api/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 EXPOSE 8000

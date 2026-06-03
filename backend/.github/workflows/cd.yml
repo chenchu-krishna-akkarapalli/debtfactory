@@ -42,7 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging  # gate: protected environment with reviewers
     steps:
-      - run: echo "TODO(platform): deploy ${{ github.sha }} to staging"
+      - name: Deploy to staging
+        run: |
+          echo "TODO(platform): deploy ${{ github.sha }} to staging"
 
   deploy-production:
     needs: deploy-staging
@@ -50,4 +52,6 @@ jobs:
     environment: production  # gate: requires manual approval
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - run: echo "TODO(platform): promote ${{ github.sha }} to production"
+      - name: Promote to production
+        run: |
+          echo "TODO(platform): promote ${{ github.sha }} to production"

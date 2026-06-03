@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "722b3681444d43ab",
+        "id": "c2fd712c2dbebfa6",
         "type": "tabs",
         "children": [
           {
-            "id": "dc0499348981e114",
+            "id": "9cd469525fb83aa3",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -176,9 +176,12 @@
       "bases:Create new base": false
     }
   },
-  "active": "dc0499348981e114",
+  "active": "9cd469525fb83aa3",
   "lastOpenFiles": [
+    "dev.ps1",
     "docs/ci_cd_guide.md",
+    "docs/ci_cd_guide.md.tmp.49980.8c02bbc79efc",
+    "requirements/base.txt",
     "docs/ci_cd_guide.md.tmp.49980.83851f61fe08",
     "docs/knowledge/Docker & Data Stores.md.tmp.49980.431d2d3e6b6b",
     "scripts/migrate_sql.py.tmp.49980.07967595bd03",
@@ -187,8 +190,6 @@
     "migrations/sql/domain_logs/0001_init.up.sql",
     "migrations/sql/domain_logs",
     "migrations/sql/auth/0001_init.down.sql",
-    "migrations/sql/auth/0001_init.up.sql",
-    "migrations/sql/auth",
     "docs/knowledge/Decisions.md",
     "docs/knowledge/Troubleshooting Log.md",
     "docs/knowledge/Database Migrations.md",

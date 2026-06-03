@@ -31,8 +31,8 @@ git push -u origin main
 
 - ✅ **Require a pull request before merging** → require **1 approval**.
 - ✅ **Require review from Code Owners** (uses [`.github/CODEOWNERS`](../.github/CODEOWNERS)).
-- ✅ **Require status checks to pass** → select: `lint-type`, `migrations`, and the
-  `test (...)` jobs. ✅ **Require branches to be up to date**.
+- ✅ **Require status checks to pass** → select the **`ci`** check. ✅ **Require
+  branches to be up to date**.
 - ✅ **Require linear history** (we squash-merge).
 - ✅ **Do not allow bypassing** the above.
 
@@ -54,15 +54,13 @@ Branch names: `feat|fix|chore|docs|refactor|test/<service>/<ticket>-<slug>`.
 Keep a branch scoped to **one** `src/app/services/<service>/` folder so two teams
 never collide. (More in [`git_workflow.md`](git_workflow.md).)
 
-### b. Make the change, then run the gates locally **before** pushing
+### b. Run the gates locally **before** pushing
 
-```bash
-ruff check .          # lint
-black .               # format (writes)
-mypy src              # types
-pytest -q             # tests
+```powershell
+.\dev.ps1 check        # ruff + black + mypy + pytest, in the dev container   (make check)
 ```
-These are exactly what CI runs — green locally ⇒ green in CI.
+No local Python needed — this runs inside the **same image CI uses**, so green
+locally ⇒ green in CI.
 
 ### c. Commit (Conventional Commits) and push
 
@@ -102,39 +100,34 @@ Rebase (don't merge `main` into your branch) so history stays linear.
 
 ## 2. What CI runs ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml))
 
-Triggered on every PR and on push to `main`/`develop`.
+Triggered on **every branch push** and on PRs into `main`. CI **builds the same
+dev image you run locally** and executes the same commands inside it — so there's
+no "works on my machine": identical Python and dependency versions everywhere.
 
-| Job | What it does | Fails when |
-| --- | ------------ | ---------- |
-| **changes** | Detects which services changed (path filters) | — |
-| **lint-type** | `ruff check .`, `black --check .`, `mypy src` (installs every service so mypy types match local) | style / type errors |
-| **test** | Per-service `pytest` with **≥ 80% coverage** on the *changed* service; unchanged services skipped | test fail or coverage < 80% |
-| **migrations** | Spins up Postgres 16, runs `scripts/migrate_sql.py` twice + `--status` | a migration fails or isn't idempotent |
+One `ci` job, four steps:
 
-> **Coverage gate:** touching `src/app/services/<svc>/` requires that service to
-> have tests ≥ 80%. The stubbed services (auth, domain_logs, ocr_jobs) need tests
-> added alongside their first real code — until then, keep changes test-covered.
+| Step | Command (inside the container) | Fails when |
+| ---- | ------------------------------ | ---------- |
+| Build dev image | `docker compose … build api` | the image won't build |
+| Lint + format + types | `ruff check . && black --check . && mypy src` | style / type errors |
+| Tests | `pytest -q` | any test fails |
+| Migrations | `migrate_sql.py` ×2 + `--status` against real Postgres | a migration fails or isn't idempotent |
 
-### Reproduce a CI failure locally
+### Reproduce any CI failure locally — one command
 
-```bash
-# same as lint-type
-ruff check . && black --check . && mypy src
-# same as the test job for one service
-pytest tests/services/rule_engine --cov=src/app/services/rule_engine --cov-fail-under=80
-# same as the migrations job (needs the docker db up)
-python scripts/migrate_sql.py && python scripts/migrate_sql.py --status
+```powershell
+.\dev.ps1 check          # lint + types + tests, the same image CI uses   (make check)
+.\dev.ps1 migrate        # the migrations step                             (make migrate)
 ```
 
 ### Reading failures
 
 ```bash
-gh pr checks                 # see which job is red
+gh pr checks                 # see if CI is red
 gh run view --log-failed     # jump to the failing step's log
 ```
 Common causes are catalogued in
-[`docs/knowledge/Troubleshooting Log.md`](knowledge/Troubleshooting%20Log.md)
-(content-type 422s, snake_case fields, the Python-3.12 / editable-install traps).
+[`docs/knowledge/Troubleshooting Log.md`](knowledge/Troubleshooting%20Log.md).
 
 ---
 

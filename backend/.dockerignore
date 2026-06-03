@@ -16,8 +16,8 @@ venv/
 .coverage
 htmlcov/
 
-# Tests are not needed in the runtime image
-tests/
+# NOTE: tests/ are intentionally NOT ignored — the `dev` image stage copies them
+# so it is self-contained for CI. The `prod` stage never copies tests.
 
 # Local env / secrets
 .env

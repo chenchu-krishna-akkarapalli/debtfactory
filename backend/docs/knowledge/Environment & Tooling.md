@@ -1,53 +1,61 @@
 ---
 title: Environment & Tooling
-tags: [debtfactory, environment, python, windows]
+tags: [debtfactory, environment, docker, windows]
 created: 2026-06-03
+updated: 2026-06-03
 ---
 
-# 🐍 Environment & Tooling
+# 🐳 Environment & Tooling (Docker-first)
 
-How the local dev environment is set up, and the Windows-specific traps. See
-[[Troubleshooting Log]] for the errors these prevent.
+There is **no local Python or venv**. Every command runs inside the same dev
+image, so the whole team + CI use identical Python (3.12) and dependency versions.
+You only need **Docker Desktop** and **git**. See [[Docker & Data Stores]] and
+[[Troubleshooting Log]].
 
-## Python version — 3.12 only
+## The one image
 
-- `pyproject.toml` pins `requires-python = ">=3.12,<3.13"`.
-- The venv runs **Python 3.12.8** (installed per-user under `%LOCALAPPDATA%\Programs\Python\Python312`).
-- A 3.13 interpreter will run the code but **blocks `pip install -e .`** with `requires a different Python`.
+- `docker/api/Dockerfile` → `base` (runtime deps) → `dev` (adds ruff/black/mypy/
+  pytest + bind-mounted source) / `prod` (slim, non-root, gunicorn).
+- Deps install from `requirements/*.in` at build time (no committed lockfiles).
+  Constraint files can't have extras, so the build strips them:
+  `sed 's/\[[^]]*\]//g' base.in > base.txt`.
+- `PYTHONPATH=/app/src` is set in the image — no editable install needed.
 
-## Setup (one time)
+## Daily commands
 
-```powershell
-$py312 = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
-& $py312 -m venv .venv
-.venv\Scripts\python -m pip install -r requirements\... 
-.venv\Scripts\python -m pip install -e .        # editable install — the key step
-```
+Windows → `.\dev.ps1 <cmd>` · Mac/Linux/WSL → `make <cmd>`:
 
-## The editable install matters
+| cmd | what |
+| --- | ---- |
+| `up` | build + start api, db, redis, adminer (hot reload) |
+| `test` | `pytest -q` in a container |
+| `lint` | ruff + black --check + mypy |
+| `check` | lint + types + tests (**what CI runs**) |
+| `migrate` | apply SQL migrations |
+| `shell` | bash into the dev image |
 
-`pip install -e .` puts the `app` package on `sys.path` permanently, so:
+Raw equivalent: `docker compose -f compose.yaml -f compose.dev.yaml run --rm --no-deps api <cmd>`.
 
-```powershell
-.venv\Scripts\python -m uvicorn app.main:create_app --factory --reload   # just works
-```
+## Why Docker-first
 
-Without it you get `ModuleNotFoundError: No module named 'app'` (the app lives in `src/app`).
+- **No "works on my machine"** — CI builds the same image and runs the same
+  commands, so green locally ⇒ green in CI.
+- New devs are productive in one command (`up`) — no Python install, no venv, no
+  dependency drift.
 
-## Windows gotchas (learned the hard way)
+## Windows gotchas (still relevant)
 
-- **PowerShell ≠ bash.** `PYTHONPATH=src cmd` does nothing in PowerShell. Use `$env:PYTHONPATH="src"` — or better, the editable install so you never need it.
-- **Do NOT `pip install --upgrade pip` in place.** Windows Defender locks pip's own vendor files mid-rewrite → corrupts the venv (`ModuleNotFoundError: pip._internal.cli`). The bundled pip is fine.
-- **Deleting `.venv` can fail** if a `uvicorn --reload` process still holds `greenlet`'s `.pyd`. Kill the python process first (`Get-CimInstance Win32_Process | … Stop-Process`).
-- PowerShell wraps a native exe's **stderr** as a red `NativeCommandError` even on success — check for the actual success line (e.g. `Successfully installed …`), not the red text.
+- **`make` isn't on Windows by default** → use `.\dev.ps1` (same verbs).
+- PowerShell wraps a native exe's **stderr** as a red `NativeCommandError` even on
+  success — check for the real success line, not the red text.
+- The migration runner connects to **`db:5432`** inside the container (compose
+  network), not `localhost:5433` (that host port is for tools like Adminer/psql).
 
-## Quality gates (what CI runs)
+## Optional: local venv for IDE autocomplete only
 
-```powershell
-.venv\Scripts\python -m ruff check src tests
-.venv\Scripts\python -m black --check src tests
-.venv\Scripts\python -m mypy src        # strict
-.venv\Scripts\python -m pytest -q
-```
+Not required to build/run/test. If your editor wants an interpreter, create a
+throwaway 3.12 venv for IntelliSense — but **run all gates via Docker**. (A leftover
+`.venv` greenlet `.pyd` can stay locked by the editor's language server; it's
+git-ignored and harmless.)
 
-#environment #windows #python
+#environment #docker #windows

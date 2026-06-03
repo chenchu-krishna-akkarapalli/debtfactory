@@ -16,32 +16,33 @@ zen-engine (GoRules JDM) · Celery · Docker · **Python 3.12**.
 
 ---
 
-## Quickstart
+## Quickstart (Docker — no local Python)
 
-> **Python 3.12 only** (the project pins `>=3.12,<3.13`). 3.13 will run the code
-> but blocks `pip install -e .`.
+> You only need **Docker Desktop** + **git**. There is **no local Python or venv** —
+> the whole team runs the same image, so "works on my machine" goes away.
 
 ```powershell
-# 1. Virtual env on Python 3.12
-py -3.12 -m venv .venv        # or: & "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" -m venv .venv
-.venv\Scripts\activate         # Unix: source .venv/bin/activate
+copy .env.example .env          # Unix/Mac: cp .env.example .env
+```
 
-# 2. Install deps + the app itself (editable install => no PYTHONPATH ever)
-pip install -r requirements/base.in
-pip install -r requirements/dev.in -c requirements/base.in
-pip install -r requirements/services/rule_engine.in -c requirements/base.in
-pip install -e .
+Then use the task runner — `.\dev.ps1 <cmd>` on Windows, `make <cmd>` on Mac/Linux/WSL:
 
-# 3. Bring up the data stores (Postgres + Redis + Adminer UI)
-copy .env.example .env         # Unix: cp .env.example .env
-docker compose -f compose.yaml -f compose.dev.yaml up -d db redis adminer
+| Windows | Mac/Linux | Does |
+| ------- | --------- | ---- |
+| `.\dev.ps1 up` | `make up` | build + start **api, db, redis, adminer** (hot reload) |
+| `.\dev.ps1 test` | `make test` | run the test suite in a container |
+| `.\dev.ps1 check` | `make check` | lint + types + tests (**exactly what CI runs**) |
+| `.\dev.ps1 migrate` | `make migrate` | apply SQL migrations |
+| `.\dev.ps1 shell` | `make shell` | shell into the dev image |
 
-# 4. Apply database migrations
-python scripts\migrate_sql.py
+- API → <http://localhost:8000> · docs → <http://localhost:8000/docs>
+- DB UI (Adminer) → <http://localhost:8081> (Server `db`, user/pass `loan`, db `loan_platform`)
 
-# 5. Run the API
-uvicorn app.main:create_app --factory --reload
-# → http://localhost:8000   ·   docs → http://localhost:8000/docs
+Prefer raw Docker? Every command above is just:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build db redis adminer api
+docker compose -f compose.yaml -f compose.dev.yaml run --rm --no-deps api pytest -q
 ```
 
 > Full walkthrough (testing, Rule Engine, team workflow):
@@ -77,13 +78,13 @@ Migrations are **`.sql` files** applied by an idempotent runner (tracked in a
 `schema_migrations` table). See [`docs/knowledge/Database Migrations.md`](docs/knowledge/Database%20Migrations.md).
 
 ```powershell
-python scripts\migrate_sql.py --status                 # applied vs pending
-python scripts\migrate_sql.py                          # apply pending *.up.sql
-python scripts\migrate_sql.py --down auth/0001_init    # roll back one
+.\dev.ps1 migrate          # apply pending (make migrate). Auto-runs on `up`.
+docker compose -f compose.yaml -f compose.dev.yaml run --rm api python scripts/migrate_sql.py --status
+docker compose -f compose.yaml -f compose.dev.yaml run --rm api python scripts/migrate_sql.py --down auth/0001_init
 ```
 
 Files live in `migrations/sql/<service>/NNNN_<name>.{up,down}.sql`. Auth + Domain
-Logs schemas exist today.
+Logs schemas exist today. The API container also applies migrations on startup.
 
 ---
 
@@ -91,7 +92,7 @@ Logs schemas exist today.
 
 Turns `Bank_Eligibility_Matrix.xlsx` (**8 banks, 23 input params**) into eligibility
 decisions via **GoRules zen-engine**. Regenerate the JDM artifact with
-`python scripts/generate_jdm.py`.
+`.\dev.ps1 jdm` (`make jdm`).
 
 ```powershell
 curl -X POST http://localhost:8000/rule-engine/evaluate `
@@ -125,15 +126,15 @@ The 7 BRE flags are **exact-match**, which partitions banks into disjoint groups
 
 ## Testing & quality gates
 
+All gates run **inside the dev container** — identical versions to CI:
+
 ```powershell
-pytest -q                          # full suite
-pytest tests/services/rule_engine/ -v
-ruff check src tests scripts       # lint
-black --check src tests scripts    # format
-mypy src                           # types (strict)
+.\dev.ps1 check                                  # ruff + black + mypy + pytest  (make check)
+.\dev.ps1 test                                   # tests only                    (make test)
+.\dev.ps1 test tests/services/rule_engine        # a subset
 ```
 
-These four gates are exactly what [CI](#team-workflow--cicd) enforces on every PR.
+CI builds the **same image** and runs the **same commands**, so green locally ⇒ green in CI.
 
 ---
 

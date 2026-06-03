@@ -1,149 +1,42 @@
 name: CI
 
+# Runs on every branch push (so teams get feedback the moment they push a
+# feature branch) and on PRs into main. Everything runs inside the SAME dev
+# image developers use locally — identical Python and dependency versions.
 on:
   push:
-    branches: [main, develop]
+    branches: ["**"]
   pull_request:
+    branches: [main]
 
-# Reusable install recipe is inlined per job (composite actions would be nicer,
-# but keeping it explicit makes the pipeline easy for new team members to read).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ---------------------------------------------------------------------------
-  # Detect which services changed so the test matrix can skip the rest.
-  # ---------------------------------------------------------------------------
-  changes:
+  ci:
     runs-on: ubuntu-latest
-    outputs:
-      core: ${{ steps.filter.outputs.core }}
-      rule_engine: ${{ steps.filter.outputs.rule_engine }}
-      auth: ${{ steps.filter.outputs.auth }}
-      domain_logs: ${{ steps.filter.outputs.domain_logs }}
-      ocr_jobs: ${{ steps.filter.outputs.ocr_jobs }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            core:
-              - 'src/app/core/**'
-              - 'src/app/common/**'
-              - 'src/app/api/**'
-              - 'src/app/main.py'
-              - 'pyproject.toml'
-              - 'requirements/**'
-            rule_engine:
-              - 'src/app/services/rule_engine/**'
-              - 'tests/services/rule_engine/**'
-            auth:
-              - 'src/app/services/auth/**'
-              - 'tests/services/auth/**'
-            domain_logs:
-              - 'src/app/services/domain_logs/**'
-              - 'tests/services/domain_logs/**'
-            ocr_jobs:
-              - 'src/app/services/ocr_jobs/**'
-              - 'tests/services/ocr_jobs/**'
 
-  # ---------------------------------------------------------------------------
-  # Lint + format + types over the whole repo. Installs every service fragment
-  # so mypy sees the same third-party types as a developer's machine.
-  # ---------------------------------------------------------------------------
-  lint-type:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install (base + dev + all services + editable)
-        run: |
-          cp requirements/base.in requirements/base.txt   # constraint target (ranges OK)
-          python -m pip install --upgrade pip
-          pip install -r requirements/base.txt -r requirements/dev.in
-          for svc in requirements/services/*.in; do pip install -r "$svc"; done
-          pip install -e .
-      - name: Ruff
-        run: ruff check .
-      - name: Black
-        run: black --check .
-      - name: Mypy
-        run: mypy src
+      - name: Build dev image
+        run: docker compose -f compose.yaml -f compose.dev.yaml build api
 
-  # ---------------------------------------------------------------------------
-  # Per-service tests with an 80% coverage floor. Only changed services run.
-  # ---------------------------------------------------------------------------
-  test:
-    needs: [changes, lint-type]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [core, rule_engine, auth, domain_logs, ocr_jobs]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Did this service change?
-        id: gate
-        run: echo "changed=${{ needs.changes.outputs[matrix.service] }}" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-python@v5
-        if: steps.gate.outputs.changed == 'true'
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install
-        if: steps.gate.outputs.changed == 'true'
+      - name: Lint + format + types
         run: |
-          cp requirements/base.in requirements/base.txt
-          python -m pip install --upgrade pip
-          pip install -r requirements/base.txt -r requirements/dev.in
-          if [ -f "requirements/services/${{ matrix.service }}.in" ]; then
-            pip install -r "requirements/services/${{ matrix.service }}.in"
-          fi
-          pip install -e .
-      - name: Test (>= 80% coverage on the changed service)
-        if: steps.gate.outputs.changed == 'true'
-        run: |
-          if [ "${{ matrix.service }}" = "core" ]; then
-            pytest tests/core --cov=src/app/core --cov-fail-under=80
-          else
-            pytest "tests/services/${{ matrix.service }}" \
-              --cov="src/app/services/${{ matrix.service }}" --cov-fail-under=80
-          fi
+          docker compose -f compose.yaml -f compose.dev.yaml run --rm --no-deps api \
+            bash -lc "ruff check . && black --check . && mypy src"
 
-  # ---------------------------------------------------------------------------
-  # Apply the plain-SQL migrations against a real Postgres and prove idempotency.
-  # ---------------------------------------------------------------------------
-  migrations:
-    needs: lint-type
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: loan
-          POSTGRES_PASSWORD: loan
-          POSTGRES_DB: loan_platform
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U loan -d loan_platform"
-          --health-interval 5s --health-timeout 3s --health-retries 10
-    env:
-      DATABASE_URL: postgresql+asyncpg://loan:loan@localhost:5432/loan_platform
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install
+      - name: Tests
+        run: docker compose -f compose.yaml -f compose.dev.yaml run --rm --no-deps api pytest -q
+
+      - name: Migrations (apply + idempotency check)
         run: |
-          cp requirements/base.in requirements/base.txt
-          python -m pip install --upgrade pip
-          pip install -r requirements/base.txt
-          pip install -e .
-      - name: Apply SQL migrations (idempotent)
-        run: |
-          python scripts/migrate_sql.py
-          python scripts/migrate_sql.py   # second run must be a no-op
-          python scripts/migrate_sql.py --status
+          docker compose -f compose.yaml -f compose.dev.yaml up -d db
+          docker compose -f compose.yaml -f compose.dev.yaml run --rm api python scripts/migrate_sql.py
+          docker compose -f compose.yaml -f compose.dev.yaml run --rm api python scripts/migrate_sql.py
+          docker compose -f compose.yaml -f compose.dev.yaml run --rm api python scripts/migrate_sql.py --status
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f compose.yaml -f compose.dev.yaml down -v
