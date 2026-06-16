@@ -32,9 +32,14 @@ async def evaluate(
     applicant: ApplicantInput,
     service: RuleEngineService = Depends(get_rule_engine_service),
 ) -> EvaluateResponse:
-    """Evaluate an applicant and return the banks they are eligible for."""
+    """Evaluate an applicant: eligible banks + per-parameter match & confidence."""
     eligible = service.evaluate(applicant)
-    return EvaluateResponse(eligible_banks=eligible, matched_rule_count=len(eligible))
+    evaluations = service.evaluate_detailed(applicant)
+    return EvaluateResponse(
+        eligible_banks=eligible,
+        matched_rule_count=len(eligible),
+        evaluations=evaluations,
+    )
 
 
 @router.post("/reload", response_model=ReloadResponse, status_code=status.HTTP_200_OK)

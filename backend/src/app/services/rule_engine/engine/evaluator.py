@@ -19,17 +19,29 @@ from typing import Any
 
 import zen
 
+from app.services.rule_engine.constants import INPUT_FIELD_EXPR
 from app.services.rule_engine.engine.jdm_builder import JdmGraph
+from app.services.rule_engine.engine.matrix_parser import MatrixRow
 from app.services.rule_engine.exceptions import EvaluationError
-from app.services.rule_engine.schemas import ApplicantInput, EligibilityResult
+from app.services.rule_engine.schemas import (
+    ApplicantInput,
+    BankEvaluation,
+    EligibilityResult,
+    RuleMatch,
+)
 
 
 class Evaluator:
     """Holds a loaded JDM decision and evaluates applicants against it."""
 
-    def __init__(self, jdm: JdmGraph) -> None:
-        """Load ``jdm`` into a ``zen.ZenEngine`` decision."""
+    def __init__(self, jdm: JdmGraph, rows: list[MatrixRow]) -> None:
+        """Load ``jdm`` into a ``zen.ZenEngine`` decision.
+
+        ``rows`` (the parsed matrix) are kept so :meth:`evaluate_detailed` can
+        report a per-parameter pass/fail trace, not just the matching banks.
+        """
         self._jdm = jdm
+        self._rows = rows
         try:
             self._engine = zen.ZenEngine()
             # zen-engine accepts a JDM mapping at runtime; its type hint is narrower.
@@ -61,6 +73,62 @@ class Evaluator:
             ) from exc
 
         return [self._to_result(item) for item in _extract_rows(response)]
+
+    def evaluate_detailed(self, applicant: ApplicantInput) -> list[BankEvaluation]:
+        """Return a per-bank, per-parameter pass/fail trace + confidence score.
+
+        For each bank rule, every constrained cell is evaluated individually with
+        the same ZEN unary semantics the decision table uses. ``confidence_score``
+        is ``rules_passed / rules_total`` (a deterministic 'how close to eligible'
+        ratio). The list is sorted by confidence, highest first.
+
+        Raises:
+            EvaluationError: if a cell expression cannot be evaluated.
+        """
+        context = applicant.model_dump()
+        evaluations: list[BankEvaluation] = []
+
+        for row in self._rows:
+            bank = row.outputs.get("bank_name", "").strip().strip('"')
+            matches: list[RuleMatch] = []
+            passed = 0
+            for field_name, cell in row.inputs.items():
+                value = context.get(field_name)
+                # Some columns test a computed field (cross-field conditional);
+                # evaluate that expression to get the value the cell actually tests.
+                field_expr = INPUT_FIELD_EXPR.get(field_name)
+                try:
+                    subject = zen.evaluate_expression(field_expr, context) if field_expr else value
+                    ok = bool(zen.evaluate_unary_expression(cell, {"$": subject}))
+                except Exception as exc:
+                    raise EvaluationError(
+                        f"Failed to evaluate rule {cell!r} for {field_name!r}: {exc}",
+                        details={"bank": bank, "parameter": field_name},
+                    ) from exc
+                passed += int(ok)
+                matches.append(
+                    RuleMatch(
+                        parameter=field_name,
+                        rule=cell,
+                        value=value,
+                        status="PASS" if ok else "FAIL",
+                    )
+                )
+
+            total = len(row.inputs)
+            evaluations.append(
+                BankEvaluation(
+                    bank_name=bank,
+                    eligible=(total > 0 and passed == total),
+                    confidence_score=round(passed / total, 4) if total else 1.0,
+                    rules_passed=passed,
+                    rules_total=total,
+                    rules=matches,
+                )
+            )
+
+        evaluations.sort(key=lambda e: e.confidence_score, reverse=True)
+        return evaluations
 
     @staticmethod
     def _to_result(item: dict[str, Any]) -> EligibilityResult:

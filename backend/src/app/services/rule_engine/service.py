@@ -14,7 +14,11 @@ from app.services.rule_engine.constants import JDM_OUTPUT_FILENAME
 from app.services.rule_engine.engine import jdm_builder, matrix_parser, rule_validator
 from app.services.rule_engine.engine.evaluator import Evaluator
 from app.services.rule_engine.engine.jdm_builder import JdmGraph
-from app.services.rule_engine.schemas import ApplicantInput, EligibilityResult
+from app.services.rule_engine.schemas import (
+    ApplicantInput,
+    BankEvaluation,
+    EligibilityResult,
+)
 
 
 def build_jdm_from_matrix(matrix_path: Path) -> tuple[JdmGraph, int]:
@@ -27,8 +31,10 @@ def build_jdm_from_matrix(matrix_path: Path) -> tuple[JdmGraph, int]:
 
 def build_evaluator_from_matrix(matrix_path: Path) -> Evaluator:
     """Build a ready-to-use :class:`Evaluator` straight from the matrix."""
-    graph, _ = build_jdm_from_matrix(matrix_path)
-    return Evaluator(graph)
+    rows = matrix_parser.parse(matrix_path)
+    rule_validator.validate_rows(rows)
+    graph = jdm_builder.build(rows)
+    return Evaluator(graph, rows)
 
 
 class RuleEngineService:
@@ -40,6 +46,10 @@ class RuleEngineService:
     def evaluate(self, applicant: ApplicantInput) -> list[EligibilityResult]:
         """Evaluate one applicant and return eligible banks."""
         return self._evaluator.evaluate(applicant)
+
+    def evaluate_detailed(self, applicant: ApplicantInput) -> list[BankEvaluation]:
+        """Per-bank, per-parameter match breakdown with confidence scores."""
+        return self._evaluator.evaluate_detailed(applicant)
 
     @staticmethod
     def reload_matrix(matrix_path: Path, decisions_dir: Path) -> tuple[int, Path]:

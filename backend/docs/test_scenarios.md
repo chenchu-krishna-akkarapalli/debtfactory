@@ -68,8 +68,9 @@ Verified against the live engine and `Bank_Eligibility_Matrix.xlsx` (8 banks, 23
 | S20 | Write-offs | `auto_loan_wo=True` | **0** - _none_ |
 | S21 | Write-offs | `pl_write_off=True` | **0** - _none_ |
 | S22 | Write-offs | `cc_write_off=True` | **1** - BOI |
-| S23 | WO amount | `wo_amount=4999` | **3** - BOI, Indian Bank, IOB |
-| S24 | WO amount | `wo_amount=5000` | **2** - Indian Bank, IOB |
+| S23 | WO amount | `wo_amount=4999` (clean) | **3** - BOI, Indian Bank, IOB |
+| S24 | WO amount | `wo_amount=5000` (clean) | **3** - BOI, Indian Bank, IOB — the `< 5000` cap only applies **with** a PL/CC write-off |
+| S24b | WO amount | `cc_write_off=True, wo_amount=5000` | **0** - _none_ (cap now applies) |
 | S25 | Account/NRI | `existing_account=False` | **1** - IOB |
 | S26 | Account/NRI | `nri_pio=True` | **2** - Indian Bank, IOB |
 | S27 | Exp/Salary/Income | `total_experience=1` | **0** - _none_ |

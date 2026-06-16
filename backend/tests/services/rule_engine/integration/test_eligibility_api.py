@@ -27,6 +27,63 @@ async def test_evaluate_returns_200_with_bank_list(client: AsyncClient) -> None:
     assert body["matched_rule_count"] == len(body["eligible_banks"])
     assert body["matched_rule_count"] >= 1
     assert {"BOI"} <= {b["bank_name"] for b in body["eligible_banks"]}
+    assert body["eligibility_status"] == "ELIGIBLE"
+
+
+async def test_not_eligible_status(client: AsyncClient) -> None:
+    """A zero-bank applicant returns 200 with eligibility_status == NOT_ELIGIBLE."""
+    payload = {**_VALID_APPLICANT, "cibil_score": 500}  # below every threshold
+    response = await client.post("/rule-engine/evaluate", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["eligible_banks"] == []
+    assert body["matched_rule_count"] == 0
+    assert body["eligibility_status"] == "NOT_ELIGIBLE"
+
+
+async def test_wo_amount_only_gated_when_writeoff(client: AsyncClient) -> None:
+    """BOI's WO Amount < 5000 cap applies ONLY when there is a PL/CC write-off."""
+
+    async def banks_for(**overrides: object) -> set[str]:
+        payload = {**_VALID_APPLICANT, **overrides}
+        resp = await client.post("/rule-engine/evaluate", json=payload)
+        return {b["bank_name"] for b in resp.json()["eligible_banks"]}
+
+    # Clean applicant + high WO amount -> BOI still eligible (cap does not apply).
+    assert "BOI" in await banks_for(wo_amount=9000)
+    # CC write-off + high WO amount -> BOI excluded (cap now applies).
+    assert "BOI" not in await banks_for(cc_write_off=True, wo_amount=9000)
+    # CC write-off + low WO amount -> BOI eligible again.
+    assert "BOI" in await banks_for(cc_write_off=True, wo_amount=3000)
+
+
+async def test_evaluate_includes_per_parameter_evaluations(client: AsyncClient) -> None:
+    """Response carries a per-bank, per-parameter match trace + confidence score."""
+    response = await client.post("/rule-engine/evaluate", json=_VALID_APPLICANT)
+    body = response.json()
+
+    evals = body["evaluations"]
+    assert len(evals) >= 1
+    # Sorted by confidence, highest first.
+    scores = [e["confidence_score"] for e in evals]
+    assert scores == sorted(scores, reverse=True)
+
+    top = evals[0]
+    for key in (
+        "bank_name",
+        "eligible",
+        "confidence_score",
+        "rules_passed",
+        "rules_total",
+        "rules",
+    ):
+        assert key in top
+    assert top["rules_total"] == len(top["rules"])
+    assert 0.0 <= top["confidence_score"] <= 1.0
+
+    rule = top["rules"][0]
+    assert set(rule) == {"parameter", "rule", "value", "status"}
+    assert rule["status"] in ("PASS", "FAIL")
 
 
 async def test_existing_car_loan_flag_excludes_bob(client: AsyncClient) -> None:
