@@ -42,3 +42,38 @@ def test_low_income_below_threshold_excluded(evaluator: Evaluator, applicants: l
     """Income below the 25k threshold → excluded from income-gated banks."""
     results = evaluator.evaluate(_applicant(applicants, "low_income_borderline"))
     assert results == []
+
+
+def test_evaluate_detailed_per_parameter_trace(
+    evaluator: Evaluator, applicants: list[dict]
+) -> None:
+    """Detailed evaluation returns a per-bank, per-parameter trace + confidence."""
+    evals = evaluator.evaluate_detailed(_applicant(applicants, "clean_high_cibil"))
+    assert evals, "expected at least one bank evaluation"
+
+    # Sorted by confidence, highest first.
+    scores = [e.confidence_score for e in evals]
+    assert scores == sorted(scores, reverse=True)
+
+    for e in evals:
+        assert 0.0 <= e.confidence_score <= 1.0
+        assert e.rules_total == len(e.rules)
+        assert e.rules_passed == sum(1 for r in e.rules if r.status == "PASS")
+        assert e.eligible == (e.rules_passed == e.rules_total)
+
+    # clean_high_cibil (CIBIL 720, car loan, clean) is eligible for BOI at 100%.
+    boi = next(e for e in evals if e.bank_name == "BOI")
+    assert boi.eligible
+    assert boi.confidence_score == 1.0
+
+
+def test_evaluate_detailed_reports_failing_parameter(
+    evaluator: Evaluator, applicants: list[dict]
+) -> None:
+    """A near-miss bank lists the exact parameter(s) that failed."""
+    # Indian Bank needs CIBIL >= 725; clean_high_cibil has 720 -> one FAIL.
+    evals = evaluator.evaluate_detailed(_applicant(applicants, "clean_high_cibil"))
+    indian = next(e for e in evals if e.bank_name == "Indian Bank")
+    assert not indian.eligible
+    failing = [r.parameter for r in indian.rules if r.status == "FAIL"]
+    assert "cibil_score" in failing

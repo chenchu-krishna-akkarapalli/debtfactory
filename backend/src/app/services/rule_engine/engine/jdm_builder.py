@@ -15,6 +15,7 @@ from typing import Any
 
 from app.services.rule_engine.constants import (
     INPUT_COLUMN_TO_FIELD,
+    INPUT_FIELD_EXPR,
     OUTPUT_COLUMN_TO_FIELD,
 )
 from app.services.rule_engine.engine.matrix_parser import MatrixRow
@@ -46,8 +47,14 @@ def build(rows: list[MatrixRow]) -> JdmGraph:
 
     # Stable input/output column ids, derived from the canonical field order so
     # the generated artifact is deterministic.
+    # The decision-table `field` may be a computed ZEN expression (see
+    # INPUT_FIELD_EXPR), but cells stay keyed by the applicant field name.
     input_defs = [
-        {"id": f"i_{field_name}", "name": column, "field": field_name}
+        {
+            "id": f"i_{field_name}",
+            "name": column,
+            "field": INPUT_FIELD_EXPR.get(field_name, field_name),
+        }
         for column, field_name in INPUT_COLUMN_TO_FIELD.items()
     ]
     output_defs = [
@@ -58,10 +65,9 @@ def build(rows: list[MatrixRow]) -> JdmGraph:
     table_rules: list[dict[str, str]] = []
     for row in rows:
         rule: dict[str, str] = {"_id": f"rule_{row.index}"}
-        for col in input_defs:
-            field_name = col["field"]
+        for field_name in INPUT_COLUMN_TO_FIELD.values():
             # Blank cell (absent) == no constraint == empty string in the table.
-            rule[col["id"]] = row.inputs.get(field_name, "")
+            rule[f"i_{field_name}"] = row.inputs.get(field_name, "")
         for col in output_defs:
             field_name = col["field"]
             value = row.outputs.get(field_name, "")

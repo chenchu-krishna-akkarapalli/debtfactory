@@ -57,6 +57,17 @@ OUTPUT_COLUMN_TO_FIELD: Final[dict[str, str]] = {
     "Description": "description",
 }
 
+# Input columns whose decision-table FIELD is a computed ZEN expression instead of
+# the raw applicant field. This lets a single cell encode a cross-field conditional
+# that a plain unary test cannot.
+#
+# wo_amount: the "< 5000" cap is only meant to apply when the applicant actually has
+# a PL or CC write-off. With no write-off the effective value is 0, so the cap never
+# bites (matches the rule "if pl_write_off or cc_write_off then wo_amount < 5000").
+INPUT_FIELD_EXPR: Final[dict[str, str]] = {
+    "wo_amount": "(pl_write_off or cc_write_off) ? wo_amount : 0",
+}
+
 # Convenience views.
 INPUT_FIELDS: Final[tuple[str, ...]] = tuple(INPUT_COLUMN_TO_FIELD.values())
 OUTPUT_FIELDS: Final[tuple[str, ...]] = tuple(OUTPUT_COLUMN_TO_FIELD.values())

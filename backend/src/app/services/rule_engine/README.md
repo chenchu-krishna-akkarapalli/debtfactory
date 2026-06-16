@@ -35,8 +35,33 @@ Regenerate the JDM artifact with `python scripts/generate_jdm.py` (or
 
 | Method | Path                    | Purpose                                            |
 | ------ | ----------------------- | -------------------------------------------------- |
-| POST   | `/rule-engine/evaluate` | Applicant profile → list of eligible banks.        |
+| POST   | `/rule-engine/evaluate` | Applicant profile → eligible banks **+ per-parameter match trace**. |
 | POST   | `/rule-engine/reload`   | Re-parse the matrix and rebuild the JDM at runtime.|
+
+### `/evaluate` response
+
+```jsonc
+{
+  "eligibility_status": "ELIGIBLE",      // "ELIGIBLE" | "NOT_ELIGIBLE" — derived from eligible_banks; branch the UI on this
+  "eligible_banks": [{ "bank_name": "BOI", "description": null }],
+  "matched_rule_count": 3,
+  "evaluations": [                       // one per bank, sorted by confidence desc
+    {
+      "bank_name": "BOM",
+      "eligible": false,
+      "confidence_score": 0.9091,        // rules_passed / rules_total (NOT an ML probability)
+      "rules_passed": 20, "rules_total": 22,
+      "rules": [
+        { "parameter": "pl_write_off", "rule": "true", "value": false, "status": "FAIL" }
+      ]
+    }
+  ]
+}
+```
+
+`confidence_score` is a deterministic "how close to eligible" ratio — each parameter
+is tested individually via `zen.evaluate_unary_expression` (same semantics as the
+decision table). Powers a real-time per-rule UI (PASS/FAIL + confidence bar).
 
 ## Matrix contract (column → field → example expression)
 
