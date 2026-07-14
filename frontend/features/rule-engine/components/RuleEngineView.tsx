@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Activity, Landmark, SlidersHorizontal } from "lucide-react";
+import { Activity, Landmark, SlidersHorizontal, ChevronsUpDown, ChevronsDownUp } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { ConsoleGrid, Panel } from "@/components/layout/shell";
@@ -13,12 +14,18 @@ import { ApplicantForm } from "./ApplicantForm";
 import { BankChips } from "./BankChips";
 import { ExportActions } from "./ExportActions";
 import { RuleMatchPanel } from "./RuleMatchPanel";
+import { FIELD_GROUPS } from "../model/groups";
 
 export function RuleEngineView() {
   const form = useForm<ApplicantInput>({
     resolver: zodResolver(applicantSchema),
     defaultValues: DEFAULT_APPLICANT,
     mode: "onChange",
+  });
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    "Credit Profile": true,
+    "Demographics & Status": true,
   });
 
   // useWatch re-renders on every edit (compiler-safe); debounce + validate before the call.
@@ -30,13 +37,37 @@ export function RuleEngineView() {
 
   const eligible = new Set((query.data?.eligible_banks ?? []).map((b) => b.bank_name));
 
+  const isAnyOpen = Object.values(openGroups).some(Boolean);
+
+  const toggleAllGroups = () => {
+    const nextState = !isAnyOpen;
+    const next: Record<string, boolean> = {};
+    FIELD_GROUPS.forEach((group) => {
+      next[group.title] = nextState;
+    });
+    setOpenGroups(next);
+  };
+
   return (
     <ConsoleGrid>
       <Panel title="Banks" icon={<Landmark size={15} />}>
         <BankChips eligible={eligible} onPick={(preset) => form.reset(preset)} />
       </Panel>
-      <Panel title="Applicant" icon={<SlidersHorizontal size={15} />}>
-        <ApplicantForm form={form} />
+      <Panel
+        title="Applicant"
+        icon={<SlidersHorizontal size={15} />}
+        actions={
+          <button
+            type="button"
+            onClick={toggleAllGroups}
+            className="flex items-center justify-center rounded-md p-1.5 text-fg-subtle hover:bg-elevated hover:text-fg transition-colors"
+            title={isAnyOpen ? "Collapse All Sections" : "Expand All Sections"}
+          >
+            {isAnyOpen ? <ChevronsDownUp size={16} /> : <ChevronsUpDown size={16} />}
+          </button>
+        }
+      >
+        <ApplicantForm form={form} openGroups={openGroups} setOpenGroups={setOpenGroups} />
       </Panel>
       <Panel
         title="Real-time Rule Match"

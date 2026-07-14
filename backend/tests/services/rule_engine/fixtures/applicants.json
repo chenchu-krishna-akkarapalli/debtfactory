@@ -23,7 +23,11 @@
     "no_income_proof": false,
     "rental_income_non_itr": false,
     "rental_income_not_reflecting": false,
-    "itr_not_filed": false
+    "itr_not_filed": false,
+    "salaried": true,
+    "self_employed": false,
+    "salary_payment_mode_bank_credit": true,
+    "salary_payment_mode_cash": false
   },
   {
     "name": "underage_excluded",
@@ -49,7 +53,11 @@
     "no_income_proof": false,
     "rental_income_non_itr": false,
     "rental_income_not_reflecting": false,
-    "itr_not_filed": false
+    "itr_not_filed": false,
+    "salaried": true,
+    "self_employed": false,
+    "salary_payment_mode_bank_credit": true,
+    "salary_payment_mode_cash": false
   },
   {
     "name": "pl_written_off",
@@ -75,7 +83,11 @@
     "no_income_proof": false,
     "rental_income_non_itr": false,
     "rental_income_not_reflecting": false,
-    "itr_not_filed": false
+    "itr_not_filed": false,
+    "salaried": true,
+    "self_employed": false,
+    "salary_payment_mode_bank_credit": true,
+    "salary_payment_mode_cash": false
   },
   {
     "name": "low_income_borderline",
@@ -101,6 +113,10 @@
     "no_income_proof": false,
     "rental_income_non_itr": false,
     "rental_income_not_reflecting": false,
-    "itr_not_filed": false
+    "itr_not_filed": false,
+    "salaried": true,
+    "self_employed": false,
+    "salary_payment_mode_bank_credit": true,
+    "salary_payment_mode_cash": false
   }
 ]

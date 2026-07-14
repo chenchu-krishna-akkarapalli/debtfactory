@@ -19,7 +19,7 @@ from typing import Any
 
 import zen
 
-from app.services.rule_engine.constants import INPUT_FIELD_EXPR
+from app.services.rule_engine.constants import INPUT_FIELD_EXPR, INPUT_FIELDS
 from app.services.rule_engine.engine.jdm_builder import JdmGraph
 from app.services.rule_engine.engine.matrix_parser import MatrixRow
 from app.services.rule_engine.exceptions import EvaluationError
@@ -92,30 +92,40 @@ class Evaluator:
             bank = row.outputs.get("bank_name", "").strip().strip('"')
             matches: list[RuleMatch] = []
             passed = 0
-            for field_name, cell in row.inputs.items():
+            for field_name in INPUT_FIELDS:
                 value = context.get(field_name)
-                # Some columns test a computed field (cross-field conditional);
-                # evaluate that expression to get the value the cell actually tests.
+                cell = row.inputs.get(field_name, "")
+
                 field_expr = INPUT_FIELD_EXPR.get(field_name)
                 try:
-                    subject = zen.evaluate_expression(field_expr, context) if field_expr else value
-                    ok = bool(zen.evaluate_unary_expression(cell, {"$": subject}))
-                except Exception as exc:
-                    raise EvaluationError(
-                        f"Failed to evaluate rule {cell!r} for {field_name!r}: {exc}",
-                        details={"bank": bank, "parameter": field_name},
-                    ) from exc
+                    subject = (
+                        zen.evaluate_expression(field_expr, context) if field_expr else value
+                    )
+                except Exception:
+                    subject = value
+
+                if not cell:
+                    ok = True
+                else:
+                    try:
+                        ok = bool(zen.evaluate_unary_expression(cell, {"$": subject}))
+                    except Exception as exc:
+                        raise EvaluationError(
+                            f"Failed to evaluate rule {cell!r} for {field_name!r}: {exc}",
+                            details={"bank": bank, "parameter": field_name},
+                        ) from exc
+
                 passed += int(ok)
                 matches.append(
                     RuleMatch(
                         parameter=field_name,
                         rule=cell,
-                        value=value,
+                        value=subject,
                         status="PASS" if ok else "FAIL",
                     )
                 )
 
-            total = len(row.inputs)
+            total = len(INPUT_FIELDS)
             evaluations.append(
                 BankEvaluation(
                     bank_name=bank,

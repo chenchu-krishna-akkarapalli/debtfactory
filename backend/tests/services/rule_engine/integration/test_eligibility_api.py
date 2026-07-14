@@ -105,6 +105,10 @@ async def test_lenient_doc_profile_matches_hdfc_axis_kotak(client: AsyncClient) 
         "rental_income_non_itr": True,
         "rental_income_not_reflecting": True,
         "itr_not_filed": True,
+        "salaried": True,
+        "self_employed": True,
+        "business_income": 150000,
+        "business_proof": "Mandatory",
     }
     response = await client.post("/rule-engine/evaluate", json=payload)
     banks = {b["bank_name"] for b in response.json()["eligible_banks"]}

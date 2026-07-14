@@ -14,7 +14,6 @@ export const ALL_BANKS = [
 
 export type BankName = (typeof ALL_BANKS)[number];
 
-// The "lenient documentation" profile that HDFC / AXIS / Kotak require.
 const LENIENT = {
   rented_house_self_employed: true,
   agriculture: true,
@@ -25,29 +24,66 @@ const LENIENT = {
 } satisfies Partial<ApplicantInput>;
 
 /**
- * A qualifying applicant profile per bank (verified against the engine).
+ * A qualifying applicant profile per bank (verified against the V4 engine).
  *
- * No single applicant is eligible for all banks (BOM requires write-offs the
- * others forbid), so these presets let a demo load any bank instantly.
+ * V4 changes: BOM no longer accepts PL write-off; CIBIL thresholds raised.
  */
 export const BANK_PRESETS: Record<BankName, ApplicantInput> = {
-  // Group A — clean credit + car loan + strict docs.
   BOI: { ...DEFAULT_APPLICANT },
   "Indian Bank": { ...DEFAULT_APPLICANT },
   IOB: { ...DEFAULT_APPLICANT },
-  // BOB — no car loan + self-employed renting.
-  BOB: { ...DEFAULT_APPLICANT, existing_car_loan: false, rented_house_self_employed: true },
-  // Group C — full lenient-documentation profile.
-  HDFC: { ...DEFAULT_APPLICANT, ...LENIENT },
-  AXIS: { ...DEFAULT_APPLICANT, ...LENIENT },
-  Kotak: { ...DEFAULT_APPLICANT, ...LENIENT },
-  // BOM — write-off recovery product: PL + CC written off, amount < 5000.
+  BOB: {
+    ...DEFAULT_APPLICANT,
+    existing_car_loan: false,
+    rented_house_self_employed: true,
+    self_employed: true,
+    salaried: false,
+    business_income: 150000,
+    se_current_itr: 300000,
+    se_previous_itr: 300000,
+    business_itr_years: 2,
+    self_employed_itr_filled: true,
+  },
+  HDFC: {
+    ...DEFAULT_APPLICANT,
+    ...LENIENT,
+    self_employed: true,
+    salaried: false,
+    business_income: 150000,
+    se_current_itr: 300000,
+    se_previous_itr: 100000,
+    business_itr_years: 2,
+    self_employed_itr_filled: true,
+  },
+  AXIS: {
+    ...DEFAULT_APPLICANT,
+    ...LENIENT,
+    self_employed: true,
+    salaried: false,
+    business_income: 150000,
+    se_current_itr: 300000,
+    se_previous_itr: 100000,
+    business_itr_years: 2,
+    self_employed_itr_filled: true,
+  },
+  Kotak: {
+    ...DEFAULT_APPLICANT,
+    ...LENIENT,
+    self_employed: true,
+    salaried: false,
+    business_income: 150000,
+    se_current_itr: 300000,
+    se_previous_itr: 100000,
+    business_itr_years: 2,
+    self_employed_itr_filled: true,
+  },
   BOM: {
     ...DEFAULT_APPLICANT,
     cibil_score: 660,
-    pl_write_off: true,
     cc_write_off: true,
     wo_amount: 3000,
     age: 40,
+    with_guarantor: true,
+    resi_cum_office_rented: true,
   },
 };

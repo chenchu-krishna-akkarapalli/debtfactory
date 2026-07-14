@@ -1,0 +1,66 @@
+Parameter,BOI,Indian Bank,IOB,BOB,BOM,HDFC,AXIS,Kotak,Res
+CIBIL Score,701 +,730 +,701+,726 +,650+,701 +,701 +,701 +,
+CIBIL PL Score,701 +,,,,,,,,
+PL Write off,No,No,No,No,No,No,No,No,
+Home Loan Write off,No,No,No,No,No,No,No,No,
+Consumer Loan  Write off,No,No,No,No,No,No,No,No,
+Agri Loan  Write off,No,No,No,No,No,No,No,No,
+MSME Loan  Write off,No,No,No,No,No,No,No,No,Msme - Company cibil
+Auto Loan  Write off,No,No,No,No,No,No,No,No,
+Credit Card Write Off,Yes ( Conditional),No,Yes ( Condtions Applied ),No,Yes ( Condtions Applied ),No,No,No,
+Write Off Amount,Less than 5000,NA,Less than 5000,No,Less than 10000 ,NA,NA,NA,Greater than 0 - No
+DPD,No,NA,Less than 90 Days in a Year,Less than 90 Days in a Year,No,,,,No.of Payment Delay Days - Cibil Document
+Loan enquiry,No,No,No,No,No,No,No,No,
+Currently Outstanding,No ( Sub to Overdue Clearance),No,Conditional,Conditional,Conditional,,,,Outstanding Balance - Cibil
+Min Age Criterial,21,21,21,21,21,21,21,21,
+Age at last EMI Salaried,60,60,75,60,70,70,70,70,get data from user through onboarding or Fetch From Document
+Age at last EMI Salaried,60,60,75,60,,,,,get data from user through onboarding or Fetch From Document
+Age at last EMI Self Employeed,65,70,75,70,70,70,70,70,
+Existing A/C Holder,Yes,Yes,No,Yes,Yes,Yes,Yes,Yes,Debt Factory Polici
+Existing Car Loan,Yes,Yes,No,No,Yes,Yes,Yes,Yes,"If Costumer have exisiting car loan - IOB,BOB : NO"
+Rented House-Salaried,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+Resi - Cum Office - One Owned,Yes,Yes,Yes,Yes,yes,Yes,Yes,Yes,"Self Employeed catogiry - his Residence and Office addres is same it is owned -yes, else No"
+Resi - Cum Office -Both Rented,,,,No,Yes,,,,Resident is  rented - Guarantor is Req : On boarding
+Without  a Gaurantor,No,No,No,No,Yes,No,No,No,
+With a Gaurantor,Yes,Yes,No,No,Yes,,,,
+Resi-Office-Separate-Both Rented,No,No,No,Yes ( Condtions Applied ),No,,,,Residence and office address is different - Onboarding
+Unmarried,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+NRI/PIO,No,Yes,Yes ( Condtions Applied ),Yes,Yes ( Condtions Applied ),Yes ( Condtions Applied ),Yes ( Condtions Applied ),Yes ( Condtions Applied ),Person of indian origin
+Minimium Stay Period for NRI,2 Yrs,2 Yrs,2 Yrs,2 Yrs,2 Yrs,2 Yrs,2 Yrs,2 Yrs,
+Agriculture,No,No,No,No,Yes,Yes,Yes,Yes,
+Employment-Firm,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Employment-Pvt Ltd,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Employment-Public Ltd,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Employment-Govt,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Employment-PSU,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Minimum work experience,2 +,2 +,2 +,2 +,2 +,2 +,2 +,2 +,
+Work Experience in current company Pvt Sec,2 +,2 +,1+,2 +,2 +,,,,
+Salary payment mode-Cash,No,No,No,No,No,No,No,No,
+Salary payment mode- Bank Credit,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+No Income Proof,No,No,No,No,No,Yes,Yes,Yes,
+Rental Income-with Agreement -Not filed ITR-Not reflecting in Bank,No,No,No,No,No,,,,
+Rental Income-with Agreement  filed ITR- Not reflecting in Bank,Yes,Yes,No,No,No,,,,Feed through Text - Onboarding
+Rental Income-with Agreement -Not filed ITR-reflecting in Bank,Yes,No,No,No,No,,,,
+Minimum Salary per month,25000,25000,25000,25000,25000,25000,25000,25000,Salary Slip
+Self Employed Current ITR,300000,300000,300000,Less than 300000( Condition),No Condition,,,,Gross Total Income
+Self Employed Previous ITR,No condition,300000,300000,2 Year Avge to be 3 Lacs,No Condition,100000,100000,100000,ITR - Gross Total Income
+Self Employed,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+Self employed ITR Filled ,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Onboarding
+ITR Not Filed ,No,No,No,No,No,Yes,Yes,Yes,Onboarding
+Business ITR,last 3 Years,2 year,2 year,2 year,2 Year ,,,2 Year ,
+Business Proof ,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,Mandatory,
+Propreitorship,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+Parternship Firm ,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+Private Limited ,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+Public Limited ,Yes,Yes,Yes,Yes,Yes,Yes,Yes,Yes,
+EMI/Income,Yes,Yes,Yes,Yes,Yes,,,,
+HUF,No,No,NA,NO,NO,,,,
+Form 16 ,Minimum 2 Year,Minimum 2 years,Minimum 2 years,Minimum 1 Year,2 Year ,,,,
+Co-Applicant For Age,,,,,,,,,
+Brother,Yes,No,No,Yes,No,,,,
+Sister,Yes,No,No,Yes,No,,,,
+Co-Applicant for Income,,,,,,,,,
+Brother,Yes,No,No,Yes,No,,,,
+Father,Yes,Yes,Yes,Yes,Yes,,,,
+Mother,Yes,Yes,Yes,Yes,Yes,,,,
+Sister,Yes,No,No,No,No,,,,

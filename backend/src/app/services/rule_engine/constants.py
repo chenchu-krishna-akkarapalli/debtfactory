@@ -26,29 +26,52 @@ JDM_OUTPUT_FILENAME: Final[str] = "bank_eligibility.jdm.json"
 # left-to-right column order of the decision table.
 INPUT_COLUMN_TO_FIELD: Final[dict[str, str]] = {
     "CIBIL Score": "cibil_score",
-    "PL Write Off": "pl_write_off",
-    "Home Loan WO": "home_loan_wo",
-    "Consumer Loan WO": "consumer_loan_wo",
-    "Agri Loan WO": "agri_loan_wo",
-    "MSME Loan WO": "msme_loan_wo",
-    "Auto Loan WO": "auto_loan_wo",
-    "CC Write Off": "cc_write_off",
-    "WO Amount": "wo_amount",
+    "PL Write off": "pl_write_off",
+    "Home Loan Write off": "home_loan_wo",
+    "Consumer Loan  Write off": "consumer_loan_wo",
+    "Agri Loan  Write off": "agri_loan_wo",
+    "MSME Loan  Write off": "msme_loan_wo",
+    "Auto Loan  Write off": "auto_loan_wo",
+    "Credit Card Write Off": "cc_write_off",
+    "Write Off Amount": "wo_amount",
+    "DPD": "dpd",
+    "Loan enquiry": "loan_enquiry",
     "Age": "age",
-    "Existing A/C": "existing_account",
-    "NRI/PIO": "nri_pio",
-    "Total Exp": "total_experience",
-    "Current Exp": "current_experience",
-    "Salary Mode": "salary_mode",
-    "Income": "income",
-    # BRE sheet additions (exact-match boolean flags).
+    "Existing A/C Holder": "existing_account",
     "Existing Car Loan": "existing_car_loan",
-    "Rented House SE": "rented_house_self_employed",
+    "Rented House-Salaried": "rented_house_salaried",
+    "Rented House-Self Employed": "rented_house_self_employed",
+    "Unmarried": "unmarried",
+    "NRI/PIO": "nri_pio",
+    "Minimium Stay Period for NRI": "minimum_stay_period_nri",
+    "Salaried": "salaried",
     "Agriculture": "agriculture",
+    "Employment-Firm": "employment_firm",
+    "Employment-Pvt Ltd": "employment_pvt_ltd",
+    "Employment-Public Ltd": "employment_public_ltd",
+    "Employment-Govt": "employment_govt",
+    "Employment-PSU": "employment_psu",
+    "Minimum work experience": "total_experience",
+    "Work Experience in current company": "current_experience",
+    "Salary payment mode-Cash": "salary_payment_mode_cash",
+    "Salary payment mode- Bank Credit": "salary_payment_mode_bank_credit",
     "No Income Proof": "no_income_proof",
-    "Rental Income Non-ITR": "rental_income_non_itr",
-    "Rental Income Not Reflecting": "rental_income_not_reflecting",
+    "Rental Income-NON ITR": "rental_income_non_itr",
+    "Rental Income-ITR": "rental_income_itr",
+    "Rental Income-Not reflecting in Bank": "rental_income_not_reflecting",
+    "Rental Income-reflecting in Bank": "rental_income_reflecting_in_bank",
+    "Minimum Salary": "minimum_salary",
+    "Min Bus Income": "min_bus_income",
+    "Self Employed": "self_employed",
+    "Self employed ITR Filled": "self_employed_itr_filled",
     "ITR Not Filed": "itr_not_filed",
+    "Business Proof": "business_proof",
+    "Propreitorship": "proprietorship",
+    "Parternship Firm": "partnership_firm",
+    "Private Limited": "private_limited",
+    "Public Limited": "public_limited",
+    "Currently Outstanding": "currently_outstanding",
+    "EMI/Income": "emi_income",
 }
 
 # Output columns: matrix header -> result field name.
@@ -60,12 +83,16 @@ OUTPUT_COLUMN_TO_FIELD: Final[dict[str, str]] = {
 # Input columns whose decision-table FIELD is a computed ZEN expression instead of
 # the raw applicant field. This lets a single cell encode a cross-field conditional
 # that a plain unary test cannot.
-#
-# wo_amount: the "< 5000" cap is only meant to apply when the applicant actually has
-# a PL or CC write-off. With no write-off the effective value is 0, so the cap never
-# bites (matches the rule "if pl_write_off or cc_write_off then wo_amount < 5000").
 INPUT_FIELD_EXPR: Final[dict[str, str]] = {
     "wo_amount": "(pl_write_off or cc_write_off) ? wo_amount : 0",
+    "minimum_salary": "salaried ? income : 999999",
+    "min_bus_income": "self_employed ? business_income : 999999",
+    "minimum_stay_period_nri": "nri_pio ? minimum_stay_period_nri : 99",
+    "self_employed_itr_filled": "self_employed ? self_employed_itr_filled : true",
+    "business_proof": 'self_employed ? business_proof : "Mandatory"',
+    "salary_payment_mode_bank_credit": "salaried ? salary_payment_mode_bank_credit : true",
+    "salary_payment_mode_cash": "salaried ? salary_payment_mode_cash : false",
+    "rented_house_self_employed": "self_employed ? rented_house_self_employed : false",
 }
 
 # Convenience views.
