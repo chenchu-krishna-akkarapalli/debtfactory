@@ -25,7 +25,6 @@ _BOOL_FIELDS: frozenset[str] = frozenset(
         "cc_write_off",
         "existing_account",
         "nri_pio",
-        # BRE sheet additions (exact-match booleans).
         "existing_car_loan",
         "rented_house_self_employed",
         "agriculture",
@@ -33,11 +32,32 @@ _BOOL_FIELDS: frozenset[str] = frozenset(
         "rental_income_non_itr",
         "rental_income_not_reflecting",
         "itr_not_filed",
+        # New additions
+        "loan_enquiry",
+        "rented_house_salaried",
+        "unmarried",
+        "salaried",
+        "employment_firm",
+        "employment_pvt_ltd",
+        "employment_public_ltd",
+        "employment_govt",
+        "employment_psu",
+        "salary_payment_mode_cash",
+        "salary_payment_mode_bank_credit",
+        "rental_income_itr",
+        "rental_income_reflecting_in_bank",
+        "self_employed",
+        "self_employed_itr_filled",
+        "proprietorship",
+        "partnership_firm",
+        "private_limited",
+        "public_limited",
+        "currently_outstanding",
     }
 )
 
 # String input fields: cells must be a quoted string literal, e.g. ``"Bank Credit"``.
-_STRING_FIELDS: frozenset[str] = frozenset({"salary_mode"})
+_STRING_FIELDS: frozenset[str] = frozenset({"salary_mode", "business_proof"})
 
 # Accepted shapes for numeric ZEN unary tests: ``>= 675``, ``< 5000``, ``[21..70]``,
 # ``(0..100]``, or a bare number.

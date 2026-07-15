@@ -1,0 +1,413 @@
+﻿newman
+
+DebtFactory - Rule Engine
+
+Γûí Happy path
+Γöö S01 Strict-doc applicant (BOI/Indian/IOB group)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.27kB, 35ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 3
+  1. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  2. eligible flags match eligible_banks
+
+Γöö S02 BOB group: no car loan + self-employed renting
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.17kB, 9ms]
+  ΓêÜ  status 200
+  3. count = 1
+  4. eligible_banks match
+  5. eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  6. eligible flags match eligible_banks
+
+Γöö S03 HDFC/AXIS/Kotak: full lenient-doc profile
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.12kB, 7ms]
+  ΓêÜ  status 200
+  7. count = 3
+  8. eligible_banks match
+  9. eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 10. eligible flags match eligible_banks
+
+Γöö S04 BOM: PL+CC written off
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.19kB, 9ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 1
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γûí CIBIL
+Γöö S05 CIBIL 649 - below every floor
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 10ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S06 CIBIL 675 - BOI/IOB floor
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.23kB, 8ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 2
+ 11. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 12. eligible flags match eligible_banks
+
+Γöö S07 CIBIL 725 - Indian Bank floor
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.27kB, 8ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 3
+ 13. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 14. eligible flags match eligible_banks
+
+Γûí Age
+Γöö S08 Age 17 - below floor
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 8ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S09 Age 70 - BOI/IOB/Indian ceiling
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.24kB, 8ms]
+  ΓêÜ  status 200
+ 15. count = 3
+ 16. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 17. eligible flags match eligible_banks
+
+Γöö S10 Age 71 - above ceiling
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 7ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γûí Write-offs
+Γöö S11 home_loan_wo = true
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 10ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S12 pl_write_off = true (only)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.19kB, 9ms]
+  ΓêÜ  status 200
+ 18. count = 0
+ 19. eligible_banks match
+ 20. eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 21. eligible flags match eligible_banks
+
+Γûí WO amount
+Γöö S13 clean + wo_amount 9000 (cap N/A -> BOI stays)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.28kB, 9ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 3
+ 22. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 23. eligible flags match eligible_banks
+
+Γöö S14 CC write-off + wo_amount 9000 (cap applies -> BOI drops)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.17kB, 9ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S15 CC write-off + wo_amount 3000 (under cap)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.23kB, 10ms]
+  ΓêÜ  status 200
+ 24. count = 1
+ 25. eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 26. eligible flags match eligible_banks
+
+Γûí Account/NRI
+Γöö S16 existing_account = false
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.2kB, 9ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 1
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S17 nri_pio = true - drops BOI
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 9ms]
+  ΓêÜ  status 200
+ 27. count = 2
+ 28. eligible_banks match
+ 29. eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 30. eligible flags match eligible_banks
+
+Γûí Exp/Salary/Income
+Γöö S18 income 24999 (< 25000)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 10ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γöö S19 salary_mode 'Cash'
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 9ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γûí BRE flags
+Γöö S20 existing_car_loan = false
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.2kB, 9ms]
+  ΓêÜ  status 200
+ 31. count = 0
+ 32. eligible_banks match
+ 33. eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+ 34. eligible flags match eligible_banks
+
+Γöö S21 agriculture = true (only)
+  POST http://localhost:8000/rule-engine/evaluate [200 OK, 17.16kB, 10ms]
+  ΓêÜ  status 200
+  ΓêÜ  count = 0
+  ΓêÜ  eligible_banks match
+  ΓêÜ  eligibility_status correct
+  ΓêÜ  evaluations sorted by confidence desc
+  ΓêÜ  eligible flags match eligible_banks
+
+Γûí Validation
+Γöö E01 Missing required field
+  POST http://localhost:8000/rule-engine/evaluate [422 Unprocessable Entity, 1.52kB, 4ms]
+  ΓêÜ  status 422
+  ΓêÜ  validation_error
+
+Γöö E02 Wrong type (age string)
+  POST http://localhost:8000/rule-engine/evaluate [422 Unprocessable Entity, 456B, 3ms]
+  ΓêÜ  status 422
+  ΓêÜ  validation_error
+
+Γöö E03 Unknown/extra field
+  POST http://localhost:8000/rule-engine/evaluate [422 Unprocessable Entity, 414B, 3ms]
+  ΓêÜ  status 422
+  ΓêÜ  validation_error
+
+Γöö E04 Empty body
+  POST http://localhost:8000/rule-engine/evaluate [422 Unprocessable Entity, 2.44kB, 4ms]
+  ΓêÜ  status 422
+  ΓêÜ  validation_error
+
+ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+Γöé                         Γöé        executed Γöé          failed Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé              iterations Γöé               1 Γöé               0 Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé                requests Γöé              25 Γöé               0 Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé            test-scripts Γöé              25 Γöé               0 Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé      prerequest-scripts Γöé               0 Γöé               0 Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé              assertions Γöé             134 Γöé              34 Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé total run duration: 1698ms                                  Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé total data received: 360.74kB (approx)                      Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöñ
+Γöé average response time: 9ms [min: 3ms, max: 35ms, s.d.: 5ms] Γöé
+ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+
+[31m   # [39m[31m failure        [39m[31m detail                                                                                   [39m
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 01.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'Indian Bank', 'BOM' ] to deeply equal [ 'BOI', 'Indian Bank', 'IOB' ] 
+                      at assertion:2 in test-script                                                            
+                      inside "Happy path / S01 Strict-doc applicant (BOI/Indian/IOB group)"                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 02.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'BOM', 'Indian Bank' ] to deeply equal [ 'BOI', 'IOB', 'Indian Bank' ] 
+                      at assertion:5 in test-script                                                            
+                      inside "Happy path / S01 Strict-doc applicant (BOI/Indian/IOB group)"                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 03.  AssertionError  count = 1                                                                                
+                      expected +0 to deeply equal 1                                                            
+                      at assertion:1 in test-script                                                            
+                      inside "Happy path / S02 BOB group: no car loan + self-employed renting"                 
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 04.  AssertionError  eligible_banks match                                                                     
+                      expected [] to deeply equal [ 'BOB' ]                                                    
+                      at assertion:2 in test-script                                                            
+                      inside "Happy path / S02 BOB group: no car loan + self-employed renting"                 
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 05.  AssertionError  eligibility_status correct                                                               
+                      expected 'NOT_ELIGIBLE' to deeply equal 'ELIGIBLE'                                       
+                      at assertion:3 in test-script                                                            
+                      inside "Happy path / S02 BOB group: no car loan + self-employed renting"                 
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 06.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [] to deeply equal [ 'BOB' ]                                                    
+                      at assertion:5 in test-script                                                            
+                      inside "Happy path / S02 BOB group: no car loan + self-employed renting"                 
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 07.  AssertionError  count = 3                                                                                
+                      expected +0 to deeply equal 3                                                            
+                      at assertion:1 in test-script                                                            
+                      inside "Happy path / S03 HDFC/AXIS/Kotak: full lenient-doc profile"                      
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 08.  AssertionError  eligible_banks match                                                                     
+                      expected [] to deeply equal [ 'HDFC', 'AXIS', 'Kotak' ]                                  
+                      at assertion:2 in test-script                                                            
+                      inside "Happy path / S03 HDFC/AXIS/Kotak: full lenient-doc profile"                      
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 09.  AssertionError  eligibility_status correct                                                               
+                      expected 'NOT_ELIGIBLE' to deeply equal 'ELIGIBLE'                                       
+                      at assertion:3 in test-script                                                            
+                      inside "Happy path / S03 HDFC/AXIS/Kotak: full lenient-doc profile"                      
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 10.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [] to deeply equal [ 'AXIS', 'HDFC', 'Kotak' ]                                  
+                      at assertion:5 in test-script                                                            
+                      inside "Happy path / S03 HDFC/AXIS/Kotak: full lenient-doc profile"                      
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 11.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'BOM' ] to deeply equal [ 'BOI', 'IOB' ]                               
+                      at assertion:2 in test-script                                                            
+                      inside "CIBIL / S06 CIBIL 675 - BOI/IOB floor"                                           
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 12.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'BOM' ] to deeply equal [ 'BOI', 'IOB' ]                               
+                      at assertion:5 in test-script                                                            
+                      inside "CIBIL / S06 CIBIL 675 - BOI/IOB floor"                                           
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 13.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'Indian Bank', 'BOM' ] to deeply equal [ 'BOI', 'Indian Bank', 'IOB' ] 
+                      at assertion:2 in test-script                                                            
+                      inside "CIBIL / S07 CIBIL 725 - Indian Bank floor"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 14.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'BOM', 'Indian Bank' ] to deeply equal [ 'BOI', 'IOB', 'Indian Bank' ] 
+                      at assertion:5 in test-script                                                            
+                      inside "CIBIL / S07 CIBIL 725 - Indian Bank floor"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 15.  AssertionError  count = 3                                                                                
+                      expected 2 to deeply equal 3                                                             
+                      at assertion:1 in test-script                                                            
+                      inside "Age / S09 Age 70 - BOI/IOB/Indian ceiling"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 16.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'Indian Bank' ] to deeply equal [ 'BOI', 'Indian Bank', 'IOB' ]        
+                      at assertion:2 in test-script                                                            
+                      inside "Age / S09 Age 70 - BOI/IOB/Indian ceiling"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 17.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'Indian Bank' ] to deeply equal [ 'BOI', 'IOB', 'Indian Bank' ]        
+                      at assertion:5 in test-script                                                            
+                      inside "Age / S09 Age 70 - BOI/IOB/Indian ceiling"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 18.  AssertionError  count = 0                                                                                
+                      expected 1 to deeply equal +0                                                            
+                      at assertion:1 in test-script                                                            
+                      inside "Write-offs / S12 pl_write_off = true (only)"                                     
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 19.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOM' ] to deeply equal []                                                    
+                      at assertion:2 in test-script                                                            
+                      inside "Write-offs / S12 pl_write_off = true (only)"                                     
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 20.  AssertionError  eligibility_status correct                                                               
+                      expected 'ELIGIBLE' to deeply equal 'NOT_ELIGIBLE'                                       
+                      at assertion:3 in test-script                                                            
+                      inside "Write-offs / S12 pl_write_off = true (only)"                                     
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 21.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOM' ] to deeply equal []                                                    
+                      at assertion:5 in test-script                                                            
+                      inside "Write-offs / S12 pl_write_off = true (only)"                                     
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 22.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'Indian Bank', 'BOM' ] to deeply equal [ 'BOI', 'Indian Bank', 'IOB' ] 
+                      at assertion:2 in test-script                                                            
+                      inside "WO amount / S13 clean + wo_amount 9000 (cap N/A -> BOI stays)"                   
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 23.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'BOM', 'Indian Bank' ] to deeply equal [ 'BOI', 'IOB', 'Indian Bank' ] 
+                      at assertion:5 in test-script                                                            
+                      inside "WO amount / S13 clean + wo_amount 9000 (cap N/A -> BOI stays)"                   
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 24.  AssertionError  count = 1                                                                                
+                      expected 2 to deeply equal 1                                                             
+                      at assertion:1 in test-script                                                            
+                      inside "WO amount / S15 CC write-off + wo_amount 3000 (under cap)"                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 25.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOI', 'BOM' ] to deeply equal [ 'BOI' ]                                      
+                      at assertion:2 in test-script                                                            
+                      inside "WO amount / S15 CC write-off + wo_amount 3000 (under cap)"                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 26.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOI', 'BOM' ] to deeply equal [ 'BOI' ]                                      
+                      at assertion:5 in test-script                                                            
+                      inside "WO amount / S15 CC write-off + wo_amount 3000 (under cap)"                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 27.  AssertionError  count = 2                                                                                
+                      expected +0 to deeply equal 2                                                            
+                      at assertion:1 in test-script                                                            
+                      inside "Account/NRI / S17 nri_pio = true - drops BOI"                                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 28.  AssertionError  eligible_banks match                                                                     
+                      expected [] to deeply equal [ 'Indian Bank', 'IOB' ]                                     
+                      at assertion:2 in test-script                                                            
+                      inside "Account/NRI / S17 nri_pio = true - drops BOI"                                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 29.  AssertionError  eligibility_status correct                                                               
+                      expected 'NOT_ELIGIBLE' to deeply equal 'ELIGIBLE'                                       
+                      at assertion:3 in test-script                                                            
+                      inside "Account/NRI / S17 nri_pio = true - drops BOI"                                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 30.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [] to deeply equal [ 'IOB', 'Indian Bank' ]                                     
+                      at assertion:5 in test-script                                                            
+                      inside "Account/NRI / S17 nri_pio = true - drops BOI"                                    
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 31.  AssertionError  count = 0                                                                                
+                      expected 1 to deeply equal +0                                                            
+                      at assertion:1 in test-script                                                            
+                      inside "BRE flags / S20 existing_car_loan = false"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 32.  AssertionError  eligible_banks match                                                                     
+                      expected [ 'BOB' ] to deeply equal []                                                    
+                      at assertion:2 in test-script                                                            
+                      inside "BRE flags / S20 existing_car_loan = false"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 33.  AssertionError  eligibility_status correct                                                               
+                      expected 'ELIGIBLE' to deeply equal 'NOT_ELIGIBLE'                                       
+                      at assertion:3 in test-script                                                            
+                      inside "BRE flags / S20 existing_car_loan = false"                                       
+[90m     [39m[90m                [39m[90m                                                                                          [39m
+ 34.  AssertionError  eligible flags match eligible_banks                                                      
+                      expected [ 'BOB' ] to deeply equal []                                                    
+                      at assertion:5 in test-script                                                            
+                      inside "BRE flags / S20 existing_car_loan = false"                                       

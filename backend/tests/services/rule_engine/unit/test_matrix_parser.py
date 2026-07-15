@@ -24,8 +24,8 @@ def test_blank_cells_mean_unconstrained(sample_matrix_path: Path) -> None:
     """Blank input cells are omitted (treated as no constraint)."""
     rows = parse(sample_matrix_path)
     first = rows[0]
-    # Row 1 (BOI) leaves the CC Write Off cell blank -> not present in inputs.
-    assert "cc_write_off" not in first.inputs
+    # Row 1 (BOI) leaves the DPD cell blank -> not present in inputs.
+    assert "dpd" not in first.inputs
     # A constrained cell is present and carries its ZEN expression verbatim.
     assert first.inputs["cibil_score"] == ">= 675"
 
