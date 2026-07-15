@@ -104,6 +104,9 @@ export const FIELD_GROUPS: FieldGroup[] = [
       { name: "rental_income_non_itr", label: "Rental Income - Non ITR", kind: "toggle" },
       { name: "rental_income_reflecting_in_bank", label: "Rental reflecting in Bank", kind: "toggle" },
       { name: "rental_income_not_reflecting", label: "Rental NOT reflecting in Bank", kind: "toggle" },
+      { name: "rental_income_agreement_no_itr_no_bank", label: "Agreement, No ITR, Not in Bank", kind: "toggle" },
+      { name: "rental_income_agreement_itr_no_bank", label: "Agreement, ITR Filed, Not in Bank", kind: "toggle" },
+      { name: "rental_income_agreement_no_itr_in_bank", label: "Agreement, No ITR, Reflecting in Bank", kind: "toggle" },
     ],
   },
   {

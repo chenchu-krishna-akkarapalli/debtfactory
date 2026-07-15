@@ -89,6 +89,18 @@ const TOGGLE_DESCRIPTIONS: Record<string, { yes: string; no: string }> = {
   rental_income_itr: { yes: "Rental income declared in ITR.", no: "No ITR rental income." },
   rental_income_not_reflecting: { yes: "Rental income does not reflect in bank statements.", no: "Rental income reflects in bank." },
   rental_income_reflecting_in_bank: { yes: "Rental income reflects in bank statements.", no: "No bank-reflecting rental income." },
+  rental_income_agreement_no_itr_no_bank: {
+    yes: "Rental with agreement, ITR not filed, not reflecting in bank.",
+    no: "Not applicable.",
+  },
+  rental_income_agreement_itr_no_bank: {
+    yes: "Rental with agreement, ITR filed, not reflecting in bank.",
+    no: "Not applicable.",
+  },
+  rental_income_agreement_no_itr_in_bank: {
+    yes: "Rental with agreement, ITR not filed, reflecting in bank.",
+    no: "Not applicable.",
+  },
   self_employed: { yes: "Applicant is Self-Employed.", no: "Applicant is not Self-Employed (Salaried)." },
   self_employed_itr_filled: { yes: "Filed ITR for business income.", no: "ITR not filed for business income." },
   itr_not_filed: { yes: "ITR not filed (No tax returns).", no: "ITR filed (Tax returns available)." },

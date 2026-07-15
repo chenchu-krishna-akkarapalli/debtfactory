@@ -31,7 +31,7 @@ const LENIENT = {
 export const BANK_PRESETS: Record<BankName, ApplicantInput> = {
   BOI: { ...DEFAULT_APPLICANT },
   "Indian Bank": { ...DEFAULT_APPLICANT },
-  IOB: { ...DEFAULT_APPLICANT },
+  IOB: { ...DEFAULT_APPLICANT, existing_car_loan: false },
   BOB: {
     ...DEFAULT_APPLICANT,
     existing_car_loan: false,
