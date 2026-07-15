@@ -32,7 +32,6 @@ _BOOL_FIELDS: frozenset[str] = frozenset(
         "rental_income_non_itr",
         "rental_income_not_reflecting",
         "itr_not_filed",
-        # New additions
         "loan_enquiry",
         "rented_house_salaried",
         "unmarried",
@@ -53,6 +52,22 @@ _BOOL_FIELDS: frozenset[str] = frozenset(
         "private_limited",
         "public_limited",
         "currently_outstanding",
+        # V4 additions
+        "resi_cum_office_owned",
+        "resi_cum_office_rented",
+        "resi_office_separate_rented",
+        "without_guarantor",
+        "with_guarantor",
+        "rental_income_agreement_no_itr_no_bank",
+        "rental_income_agreement_itr_no_bank",
+        "rental_income_agreement_no_itr_in_bank",
+        "huf",
+        "co_applicant_age_brother",
+        "co_applicant_age_sister",
+        "co_applicant_income_brother",
+        "co_applicant_income_father",
+        "co_applicant_income_mother",
+        "co_applicant_income_sister",
     }
 )
 
@@ -130,6 +145,7 @@ def _validate_input_cell(row_index: int, field_name: str, expr: str) -> None:
     # Otherwise numeric: comparison, range, or bare number.
     if not (_COMPARISON.match(expr) or _RANGE.match(expr) or _BARE_NUMBER.match(expr)):
         raise RuleValidationError(
-            f"Row {row_index}: numeric field {field_name!r} has malformed " f"expression {expr!r}.",
+            f"Row {row_index}: numeric field {field_name!r} has malformed "
+            f"expression {expr!r}.",
             details={"row": row_index, "field": field_name, "value": expr},
         )

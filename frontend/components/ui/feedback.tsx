@@ -172,6 +172,23 @@ export function translateRule(
     isWaived = true;
   } else if (parameter === "minimum_stay_period_nri" && Number(value) >= 99) {
     isWaived = true;
+  } else if (
+    (parameter === "se_current_itr" || parameter === "se_previous_itr") &&
+    Number(value) >= 999999
+  ) {
+    isWaived = true;
+  } else if (
+    (parameter === "business_itr_years" || parameter === "form_16_years") &&
+    Number(value) >= 99
+  ) {
+    isWaived = true;
+  } else if (parameter === "cibil_pl_score" && Number(value) >= 999) {
+    isWaived = true;
+  } else if (
+    (parameter === "age_last_emi_salaried" || parameter === "age_last_emi_se") &&
+    Number(value) === 0
+  ) {
+    isWaived = true;
   }
 
   let actual = "";

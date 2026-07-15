@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const applicantSchema = z.object({
+const applicantFields = z.object({
   cibil_score: z.number().int().min(300).max(900),
   cibil_pl_score: z.number().int().min(0).max(900),
   pl_write_off: z.boolean(),
@@ -74,7 +74,21 @@ export const applicantSchema = z.object({
   salary_mode: z.enum(["Bank Credit", "Cash"]).optional(),
 });
 
-export type ApplicantInput = z.infer<typeof applicantSchema>;
+/** Mirrors the backend `ApplicantInput.map_legacy_fields` validator, which
+ * rejects (422) payloads where both salary payment modes are true. */
+export const applicantSchema = applicantFields.superRefine((v, ctx) => {
+  if (v.salary_payment_mode_cash && v.salary_payment_mode_bank_credit) {
+    for (const path of ["salary_payment_mode_cash", "salary_payment_mode_bank_credit"] as const) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [path],
+        message: "Salary mode cannot be both Cash and Bank Credit",
+      });
+    }
+  }
+});
+
+export type ApplicantInput = z.infer<typeof applicantFields>;
 
 /** A sensible, eligible-by-default starting applicant. */
 export const DEFAULT_APPLICANT: ApplicantInput = {
